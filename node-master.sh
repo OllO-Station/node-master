@@ -31,7 +31,10 @@ setup_environment() {
     MAINNODE_RPC="https://rpc.ollo.zone"
     CONFIG="$HOME/.ollo/config/config.toml"
     APPCONFIG="$HOME/.ollo/config/app.toml"
+    # Download and copy the genesis file
+    # Replace this with the actual command to get the genesis file for the specific chain
     curl $MAINNODE_RPC/genesis? | jq ".result.genesis" > $HOME/.ollo/config/genesis.json
+
     ollod validate-genesis
     response=$(curl -s "$MAINNODE_RPC/status")
     seed_id=$(echo "$response" | jq -r '.result.node_info.id')
@@ -56,8 +59,8 @@ manage_keys() {
         echo "ollod keys add <name> --recover"
         read -p "Would you like to import keys now? (yes/no): " import_now
         if [ "$import_now" == "yes" ]; then
-            read -p "Enter the name for the key: " key_name
-            ollod keys add $key_name --recover
+            read -p "Enter the name for the key: " new_key_name
+            ollod keys add $new_key_name --recover
         fi
     else
         echo "Creating new keys."
@@ -99,20 +102,16 @@ EOF
 }
 
 # Function to set up a full node
-setup_full_node() {
-    chain_id=$1
+init_new_node() {
+    chain_id="ollo-testnet-2"
     echo "Setting up a full node for $chain_id..."
     
+    read -p "Enter node moniker (e.g., my_node): " moniker
+
     # Initialize the node (Replace 'node_name' with your desired node name)
-    ollod init node_name --chain-id $chain_id
+    ollod init $moniker --chain-id $chain_id --overwrite
     
-    # Download and copy the genesis file
-    # Replace this with the actual command to get the genesis file for the specific chain
-    curl $MAINNODE_RPC/genesis? | jq ".result.genesis" > $HOME/.ollo/config/genesis.json
-    
-    # Add seed nodes (Replace with actual seed node addresses)
-    sed -i 's/seeds = ""/seeds = "seed1,seed2,seed3"/' ~/.ollod/config/config.toml
-    echo "Full node set up for $chain_id."
+    echo "Initialization $moniker node for $chain_id."
 }
 
 setup_validator_node() {
@@ -125,14 +124,12 @@ setup_validator_node() {
     read -p "Enter details: " details
     read -p "Enter security contact email: " security_contact
     read -p "Enter identity (e.g., KEYBASE PGP): " identity
-    read -p "Enter the chain ID for setting up the validator node: " chain_id
-    read -p "Enter the validator key name: " validator_key_name
     echo "Setting up a validator node for $chain_id..."
-    ollod init "my_validator_node" --chain-id=$chain_id
+    
     ollod tx staking create-validator \
         --amount="$amount" \
         --pubkey="$(ollod tendermint show-validator)" \
-        --moniker="my_validator_node" \
+        --moniker="$moniker" \
         --chain-id=$chain_id \
         --commission-rate="$commission_rate" \
         --commission-max-rate="$commission_max_rate" \
@@ -140,7 +137,7 @@ setup_validator_node() {
         --min-self-delegation="$min_self_delegation" \
         --gas="auto" \
         --gas-adjustment="1.5" \
-        --from="$validator_key_name" \
+        --from="$new_key_name" \
         --website="$website" \
         --details="$details" \
         --security-contact="$security_contact" \
@@ -151,22 +148,22 @@ setup_validator_node() {
 
 # Function to update validator details
 update_validator() {
-    chain_id=$1
+    chain_id="ollo-testnet-2"
     echo "Updating validator details for $chain_id..."
     
     # Update validator description
     ollod tx staking edit-validator \
-        --moniker="new_validator_name" \
+        --moniker="$moniker" \
         --identity="new_identity" \
         --website="https://new-website.com" \
         --details="New details about the validator" \
-        --from=validator_key_name \
+        --from="$new_key_name" \
         --chain-id=$chain_id
     
     # Update validator commission rate
     ollod tx staking edit-validator \
         --commission-rate="0.15" \
-        --from=validator_key_name \
+        --from="$new_key_name" \
         --chain-id=$chain_id
     
     echo "Validator details updated for $chain_id."
@@ -180,7 +177,7 @@ while true; do
     echo " OLLO CHAIN NODE SETUP"
     echo "====================================="
     echo "1. Install necessary software"
-    echo "2. Set up a full node"
+    echo "2. Init new node"
     echo "3. Set up environment"
     echo "4. Set up Keys"
     echo "5. Service Management"
@@ -195,7 +192,7 @@ while true; do
             install_software
             ;;
         2)
-            setup_full_node
+            init_new_node
             ;;
         3)
             setup_environment
