@@ -28,16 +28,21 @@ install_software() {
 # Function to set up the environment
 setup_environment() {
     echo "Setting up the environment..."
-    # Fetch genesis.json from genesis node
+    MAINNODE_RPC="https://rpc.ollo.zone"
+    CONFIG="$HOME/.ollo/config/config.toml"
+    APPCONFIG="$HOME/.ollo/config/app.toml"
     curl $MAINNODE_RPC/genesis? | jq ".result.genesis" > $HOME/.ollo/config/genesis.json
     ollod validate-genesis
-    # Use curl to make the HTTP request and capture the response
     response=$(curl -s "$MAINNODE_RPC/status")
-    # Extract the seed ID from the response
     seed_id=$(echo "$response" | jq -r '.result.node_info.id')
     MAINNODE_ID="$seed_id@73.14.46.216:26656"
-    # set seed to main node's id manually
     sed -i 's/persistent_peers = ""/persistent_peers = "'$MAINNODE_ID'"/g' ~/.ollo/config/config.toml
+    sed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = \["*"\]/g' "$CONFIG"
+    sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' "$CONFIG"
+    sed -i '/\[api\]/,+3 s/enable = false/enable = true/' "$APPCONFIG"
+    sed -i '/\[api\]/,+3 s/swagger = false/swagger = true/' "$APPCONFIG"
+    sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/g'  "$APPCONFIG"
+    sed -i 's/api = "eth,net,web3"/api = "eth,txpool,personal,net,debug,web3"/g' "$APPCONFIG"
     echo "Environment set up."
 }
 
@@ -103,44 +108,49 @@ setup_full_node() {
     
     # Download and copy the genesis file
     # Replace this with the actual command to get the genesis file for the specific chain
-    cp path/to/genesis.json ~/.ollod/config/genesis.json
+    curl $MAINNODE_RPC/genesis? | jq ".result.genesis" > $HOME/.ollo/config/genesis.json
     
     # Add seed nodes (Replace with actual seed node addresses)
-    sed -i 's/seeds = ""/seeds = "seed1,seed2,seed3"/' ~/.ollochaind/config/config.toml
+    sed -i 's/seeds = ""/seeds = "seed1,seed2,seed3"/' ~/.ollod/config/config.toml
     
     # Start the node
     ollod start
     echo "Full node set up for $chain_id."
 }
 
-# Function to set up a validator node
 setup_validator_node() {
-    chain_id=$1
+    read -p "Enter amount (e.g., 1000000000000uollo): " amount
+    read -p "Enter commission rate (e.g., 0.10): " commission_rate
+    read -p "Enter commission max rate (e.g., 0.20): " commission_max_rate
+    read -p "Enter commission max change rate (e.g., 0.05): " commission_max_change_rate
+    read -p "Enter min self delegation (e.g., 1000000): " min_self_delegation
+    read -p "Enter your website: " website
+    read -p "Enter details: " details
+    read -p "Enter security contact email: " security_contact
+    read -p "Enter identity (e.g., KEYBASE PGP): " identity
+    read -p "Enter the chain ID for setting up the validator node: " chain_id
+    read -p "Enter the validator key name: " validator_key_name
     echo "Setting up a validator node for $chain_id..."
-    
-    # Initialize the node and set up as in 'setup_full_node'
-    # ...
-    
-    # Create a new key or import an existing one for the validator
-    # Replace 'validator_key_name' with your desired key name
-    ollod keys add validator_key_name
-    
-    # Generate a transaction to create the validator
-    # Replace the relevant fields as required
+    ollod init "my_validator_node" --chain-id=$chain_id
     ollod tx staking create-validator \
-        --amount=10000000stake \
-        --pubkey=$(ollod tendermint show-validator) \
-        --moniker="your_validator_name" \
+        --amount="$amount" \
+        --pubkey="$(ollod tendermint show-validator)" \
+        --moniker="my_validator_node" \
         --chain-id=$chain_id \
-        --commission-rate="0.10" \
-        --commission-max-rate="0.20" \
-        --commission-max-change-rate="0.01" \
-        --min-self-delegation="1" \
+        --commission-rate="$commission_rate" \
+        --commission-max-rate="$commission_max_rate" \
+        --commission-max-change-rate="$commission_max_change_rate" \
+        --min-self-delegation="$min_self_delegation" \
         --gas="auto" \
-        --from=validator_key_name
-    
-    echo "Validator node set up for $chain_id."
+        --gas-adjustment="1.5" \
+        --from="$validator_key_name" \
+        --website="$website" \
+        --details="$details" \
+        --security-contact="$security_contact" \
+        --identity="$identity"
+    echo "Validator node set up."
 }
+
 
 # Function to update validator details
 update_validator() {
@@ -175,8 +185,8 @@ while true; do
     echo "1. Install necessary software"
     echo "2. Set up environment"
     echo "3. Set up Keys"
-    echo "4. Set up a validator node"
     echo "5. Set up a full node"
+    echo "4. Set up a validator node"
     echo "6. Update validator details"
     echo "7. Service Management"
     echo "8. Exit"
