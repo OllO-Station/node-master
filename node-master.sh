@@ -18,7 +18,7 @@ display_ascii_art() {
 # Function to install OLLO CLI and node software
 install_software() {
     echo "Installing OLLO CLI and Node software..."
-    export PATH="$PATH:/root/go/bin"
+    # export PATH="$PATH:/root/go/bin"
     git clone https://github.com/OllO-Station/ollo.git
     cd ollo
     make install
@@ -39,7 +39,7 @@ setup_environment() {
     response=$(curl -s "$MAINNODE_RPC/status")
     seed_id=$(echo "$response" | jq -r '.result.node_info.id')
     MAINNODE_ID="$seed_id@73.14.46.216:26656"
-    sed -i 's/persistent_peers = ""/persistent_peers = "'$MAINNODE_ID'"/g' ~/.ollo/config/config.toml
+    sed -i 's/persistent_peers = ""/persistent_peers = "'$MAINNODE_ID'"/g' "$CONFIG"
     sed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = \["*"\]/g' "$CONFIG"
     sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' "$CONFIG"
     sed -i '/\[api\]/,+3 s/enable = false/enable = true/' "$APPCONFIG"
