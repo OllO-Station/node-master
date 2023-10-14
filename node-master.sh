@@ -112,9 +112,6 @@ setup_full_node() {
     
     # Add seed nodes (Replace with actual seed node addresses)
     sed -i 's/seeds = ""/seeds = "seed1,seed2,seed3"/' ~/.ollod/config/config.toml
-    
-    # Start the node
-    ollod start
     echo "Full node set up for $chain_id."
 }
 
@@ -158,7 +155,7 @@ update_validator() {
     echo "Updating validator details for $chain_id..."
     
     # Update validator description
-    ollochaind tx staking edit-validator \
+    ollod tx staking edit-validator \
         --moniker="new_validator_name" \
         --identity="new_identity" \
         --website="https://new-website.com" \
@@ -167,7 +164,7 @@ update_validator() {
         --chain-id=$chain_id
     
     # Update validator commission rate
-    ollochaind tx staking edit-validator \
+    ollod tx staking edit-validator \
         --commission-rate="0.15" \
         --from=validator_key_name \
         --chain-id=$chain_id
@@ -183,12 +180,12 @@ while true; do
     echo " OLLO CHAIN NODE SETUP"
     echo "====================================="
     echo "1. Install necessary software"
-    echo "2. Set up environment"
-    echo "3. Set up Keys"
-    echo "5. Set up a full node"
-    echo "4. Set up a validator node"
-    echo "6. Update validator details"
-    echo "7. Service Management"
+    echo "2. Set up a full node"
+    echo "3. Set up environment"
+    echo "4. Set up Keys"
+    echo "5. Service Management"
+    echo "6. Set up a validator node"
+    echo "7. Update validator details"
     echo "8. Exit"
     echo "====================================="
     read -p "Select an option [1-8]: " option
@@ -198,22 +195,22 @@ while true; do
             install_software
             ;;
         2)
-            setup_environment
-            ;;
-        3)
-            manage_keys
-            ;;
-        4)
-            setup_validator_node
-            ;;
-        5)
             setup_full_node
             ;;
+        3)
+            setup_environment
+            ;;
+        4)
+            manage_keys
+            ;;
+        5)
+            manage_service
+            ;;
         6)
-            update_validator
+            setup_validator_node
             ;;
         7)
-            manage_service
+            update_validator
             ;;
         8)
             echo "Exiting."
