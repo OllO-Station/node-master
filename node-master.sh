@@ -17,11 +17,31 @@ display_ascii_art() {
 
 # Function to install OLLO CLI and node software
 install_software() {
+
+    # install go
+    wget  https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf  go1.21.0.linux-amd64.tar.gz
+    rm -rf go1.21.0.linux-amd64.tar.gz
+
+    export GOROOT=/usr/local/go
+    export GOPATH=$HOME/go
+    export GO111MODULE=on
+    export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+
+    # install jq
+    sudo apt update
+    sudo apt install -y jq
+
+    # install make
+    sudo apt install make
+
     echo "Installing OLLO CLI and Node software..."
-    # export PATH="$PATH:/root/go/bin"
     git clone https://github.com/OllO-Station/ollo.git
     cd ollo
     make install
+    
+    export PATH="$PATH:/root/go/bin"
+    
     echo "Software installed."
 }
 
