@@ -38,7 +38,7 @@ setup_environment() {
     ollod validate-genesis
     response=$(curl -s "$MAINNODE_RPC/status")
     seed_id=$(echo "$response" | jq -r '.result.node_info.id')
-    MAINNODE_ID="$seed_id@73.14.46.216:26656"
+    MAINNODE_ID="$seed_id@71.56.196.42:26656"
     sed -i 's/persistent_peers = ""/persistent_peers = "'$MAINNODE_ID'"/g' "$CONFIG"
     sed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = \["*"\]/g' "$CONFIG"
     sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/g' "$CONFIG"
@@ -127,21 +127,22 @@ setup_validator_node() {
     echo "Setting up a validator node for $chain_id..."
     
     ollod tx staking create-validator \
-        --amount="$amount" \
-        --pubkey="$(ollod tendermint show-validator)" \
-        --moniker="$moniker" \
-        --chain-id=$chain_id \
-        --commission-rate="$commission_rate" \
-        --commission-max-rate="$commission_max_rate" \
-        --commission-max-change-rate="$commission_max_change_rate" \
-        --min-self-delegation="$min_self_delegation" \
-        --gas="auto" \
-        --gas-adjustment="1.5" \
-        --from="$new_key_name" \
-        --website="$website" \
-        --details="$details" \
-        --security-contact="$security_contact" \
-        --identity="$identity"
+        --amount "$amount" \
+        --pubkey "$(ollod tendermint show-validator)" \
+        --moniker "$moniker" \
+        --chain-id $chain_id \
+        --commission-rate "$commission_rate" \
+        --commission-max-rate "$commission_max_rate" \
+        --commission-max-change-rate "$commission_max_change_rate" \
+        --min-self-delegation "$min_self_delegation" \
+        --gas "auto" \
+        --gas-adjustment "1.5" \
+        --from "$new_key_name" \
+        --website "$website" \
+        --details "$details" \
+        --security-contact "$security_contact" \
+        --identity "$identity"
+      
     echo "Validator node set up."
 }
 
