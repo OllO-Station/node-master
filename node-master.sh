@@ -18,22 +18,27 @@ display_ascii_art() {
 # Function to install OLLO CLI and node software
 install_software() {
 
+    # remove exsisting files
+    rm -rf $HOME/go/bin/ollod
+    rm -rf $HOME/.ollo
+    sudo systemctl stop ollo
+
     # install go
-    wget  https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
-    sudo tar -C /usr/local -xzf  go1.21.0.linux-amd64.tar.gz
-    rm -rf go1.21.0.linux-amd64.tar.gz
+    # wget  https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    # sudo tar -C /usr/local -xzf  go1.21.0.linux-amd64.tar.gz
+    # rm -rf go1.21.0.linux-amd64.tar.gz
 
     export GOROOT=/usr/local/go
     export GOPATH=$HOME/go
     export GO111MODULE=on
     export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 
-    # install jq
-    sudo apt update
-    sudo apt install -y jq
+    # # install jq
+    # sudo apt update
+    # sudo apt install -y jq
 
-    # install make
-    sudo apt install make
+    # # install make
+    # sudo apt install make
 
     echo "Installing OLLO CLI and Node software..."
     git clone https://github.com/OllO-Station/ollo.git
@@ -58,6 +63,7 @@ setup_environment() {
     ollod validate-genesis
     response=$(curl -s "$MAINNODE_RPC/status")
     seed_id=$(echo "$response" | jq -r '.result.node_info.id')
+    
     MAINNODE_ID="$seed_id@71.56.196.42:26656"
     sed -i 's/persistent_peers = ""/persistent_peers = "'$MAINNODE_ID'"/g' "$CONFIG"
     sed -i 's/cors_allowed_origins = \[\]/cors_allowed_origins = \["*"\]/g' "$CONFIG"
@@ -151,13 +157,13 @@ setup_validator_node() {
         --pubkey "$(ollod tendermint show-validator)" \
         --moniker "$moniker" \
         --chain-id $chain_id \
-        --commission-rate "$commission_rate" \
-        --commission-max-rate "$commission_max_rate" \
-        --commission-max-change-rate "$commission_max_change_rate" \
-        --min-self-delegation "$min_self_delegation" \
+        --commission-rate $commission_rate \
+        --commission-max-rate $commission_max_rate \
+        --commission-max-change-rate $commission_max_change_rate \
+        --min-self-delegation $min_self_delegation \
         --gas "auto" \
-        --gas-adjustment "1.5" \
-        --from "$new_key_name" \
+        --gas-adjustment 1.5 \
+        --from $new_key_name \
         --website "$website" \
         --details "$details" \
         --security-contact "$security_contact" \
